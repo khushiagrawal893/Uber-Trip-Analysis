@@ -56,4 +56,4 @@ It reveals key insights such as:
 - Temporal Analysis: ![Dashboard](https://github.com/khushiagrawal893/Uber-Trip-Analysis/blob/main/Dashboards/Temporal%20Analysis.png)
 - Trip Patterns: ![Dashboard](https://github.com/khushiagrawal893/Uber-Trip-Analysis/blob/main/Dashboards/Trip%20Patterns.png)
 - Purpose and Trip Segmentation: ![Dashboard](https://github.com/khushiagrawal893/Uber-Trip-Analysis/blob/main/Dashboards/Purpose%20and%20Trip%20Segmentation.png)
-- Data Quality & Anomalies: ![Dashboard](screenshots/forecasting.png)
+- Data Quality & Anomalies: ![Dashboard](https://github.com/khushiagrawal893/Uber-Trip-Analysis/blob/main/Dashboards/Data%20Quality%20%26%20Anomalies.png)
