@@ -1,0 +1,255 @@
+-- Creating database
+CREATE DATABASE IF NOT EXISTS uber;
+USE uber;
+
+-- 1. Drop and recreate table
+DROP TABLE IF EXISTS UberTrips;
+
+CREATE TABLE UberTrips (
+    trip_id INT AUTO_INCREMENT PRIMARY KEY,
+    start_date VARCHAR(20),   -- keep as text for now
+    end_date VARCHAR(20),     -- keep as text for now
+    category VARCHAR(20),
+    start_location VARCHAR(100),
+    stop_location VARCHAR(100),
+    miles DECIMAL(10,2),
+    purpose VARCHAR(50)
+);
+
+-- 2. Load data (file must be inside secure_file_priv folder!)
+LOAD DATA INFILE "E:\UberDataset.csv"
+INTO TABLE UberTrips
+FIELDS TERMINATED BY ','
+ENCLOSED BY '"'
+LINES TERMINATED BY '\r\n'
+IGNORE 1 ROWS
+(start_date, end_date, category, start_location, stop_location, miles, purpose);
+
+-- 3. Convert values in place
+UPDATE UberTrips
+SET start_date = STR_TO_DATE(start_date, '%m/%d/%y %H:%i'),
+    end_date   = STR_TO_DATE(end_date, '%m/%d/%y %H:%i');
+
+-- 4. Change column types to DATETIME AFTER conversion
+ALTER TABLE UberTrips 
+    MODIFY start_date DATETIME,
+    MODIFY end_date DATETIME;
+
+select * from UberTrips;
+
+-- Checking missing values
+SELECT
+  SUM(CASE WHEN end_date IS NULL THEN 1 ELSE 0 END) AS missing_end_date,
+  SUM(CASE WHEN category IS NULL OR category = '' THEN 1 ELSE 0 END) AS missing_category,
+  SUM(CASE WHEN start_location IS NULL OR start_location = '' THEN 1 ELSE 0 END) AS missing_start,
+  SUM(CASE WHEN stop_location IS NULL OR stop_location = '' THEN 1 ELSE 0 END) AS missing_stop,
+  SUM(CASE WHEN purpose IS NULL OR purpose = '' THEN 1 ELSE 0 END) AS missing_purpose
+FROM UberTrips;
+
+-- Dropping missing values of END_DATE, START, STOP, CATEGORY
+DELETE FROM UberTrips
+WHERE end_date IS NULL
+   OR category IS NULL OR category = ''
+   OR start_location IS NULL OR start_location = ''
+   OR stop_location IS NULL OR stop_location = '';
+   
+-- Replace missing values in purpose with "Unknown"
+UPDATE UberTrips
+SET purpose = 'Unknown'
+WHERE purpose IS NULL OR purpose = '';
+
+select * from UberTrips limit 10;
+
+-- Total number of trips
+SELECT COUNT(*) AS total_trips
+FROM UberTrips;
+
+-- Most common trip Purpose
+SELECT purpose, COUNT(*) AS trips
+FROM UberTrips
+GROUP BY purpose
+ORDER BY trips DESC;
+
+-- Trips per month
+SELECT DATE_FORMAT(start_date, '%Y-%m') AS month,
+       COUNT(*) AS total_trips
+FROM UberTrips
+GROUP BY month
+ORDER BY month;
+
+-- Trips per week of day
+SELECT DAYNAME(start_date) AS day_of_week,
+       COUNT(*) AS total_trips
+FROM UberTrips
+GROUP BY day_of_week
+ORDER BY FIELD(day_of_week,'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday');
+
+-- Trips per Hour of day
+SELECT HOUR(start_date) AS hour_of_day,
+       COUNT(*) AS total_trips
+FROM UberTrips
+GROUP BY hour_of_day
+ORDER BY hour_of_day;
+
+-- Average trip duration per month
+SELECT DATE_FORMAT(start_date, '%Y-%m') AS month,
+       AVG(TIMESTAMPDIFF(MINUTE, start_date, end_date)) AS avg_duration_min
+FROM UberTrips
+GROUP BY month
+ORDER BY month;
+
+-- Average trip duration in minutes
+SELECT AVG(TIMESTAMPDIFF(MINUTE, start_date, end_date)) AS avg_trip_minutes
+FROM UberTrips;
+
+-- Top 10 Start Location
+SELECT start_location, COUNT(*) AS total_trips
+FROM UberTrips
+GROUP BY start_location
+ORDER BY total_trips DESC
+LIMIT 10;
+
+-- Top 10 stop location
+SELECT stop_location, COUNT(*) AS total_trips
+FROM UberTrips
+GROUP BY stop_location
+ORDER BY total_trips DESC
+LIMIT 10;
+
+-- Most frequent Routes
+SELECT start_location, stop_location, COUNT(*) AS trip_count
+FROM UberTrips
+GROUP BY start_location, stop_location
+ORDER BY trip_count DESC
+LIMIT 10;
+
+-- Miles travelled by Category
+SELECT category, SUM(miles) AS total_miles
+FROM UberTrips
+GROUP BY category;
+
+-- Trips by Category
+SELECT category, COUNT(*) AS total_trips, SUM(miles) AS total_miles
+FROM UberTrips
+GROUP BY category;
+
+-- Trips by Purpose
+SELECT purpose, COUNT(*) AS total_trips
+FROM UberTrips
+GROUP BY purpose
+ORDER BY total_trips DESC;
+
+-- Average miles by purpose
+SELECT purpose, AVG(miles) AS avg_miles
+FROM UberTrips
+GROUP BY purpose
+ORDER BY avg_miles DESC;
+
+-- Top 10 longeset trips
+SELECT trip_id, start_location, stop_location, miles, start_date, end_date
+FROM UberTrips
+ORDER BY miles DESC
+LIMIT 10;
+
+-- Average trip distance per month
+SELECT DATE_FORMAT(start_date, '%Y-%m') AS month,
+       AVG(miles) AS avg_distance
+FROM UberTrips
+GROUP BY month
+ORDER BY month;
+
+-- Trip duration distribution
+SELECT TIMESTAMPDIFF(MINUTE, start_date, end_date) AS duration_min,
+       COUNT(*) AS total_trips
+FROM UberTrips
+GROUP BY duration_min
+ORDER BY total_trips DESC
+LIMIT 20;
+
+/*Might want to check*/
+-- Trips with zero or very small miles
+SELECT * 
+FROM UberTrips
+WHERE miles <= 1;
+
+-- Extremely long trips(possibly incorrect)
+SELECT * 
+FROM UberTrips
+WHERE miles > 1000;
+
+-- Trips with missing purpose
+SELECT COUNT(*) AS missing_purpose_trips
+FROM UberTrips
+WHERE purpose = 'Unknown';
+
+-- Miles per day
+SELECT DATE(start_date) AS trip_day,
+       SUM(miles) AS total_miles
+FROM UberTrips
+GROUP BY trip_day
+ORDER BY trip_day;
+
+-- Longest average route
+SELECT start_location, stop_location,
+       AVG(miles) AS avg_miles
+FROM UberTrips
+GROUP BY start_location, stop_location
+ORDER BY avg_miles DESC
+LIMIT 10;
+
+-- Peak travel Hours
+SELECT HOUR(start_date) AS hour_of_day,
+       COUNT(*) AS total_trips
+FROM UberTrips
+GROUP BY hour_of_day
+ORDER BY total_trips DESC
+LIMIT 1;
+
+-- Peak Travel day
+SELECT DATE(start_date) AS trip_day,
+       COUNT(*) AS total_trips
+FROM UberTrips
+GROUP BY trip_day
+ORDER BY total_trips DESC
+LIMIT 1;
+
+-- Longest duration trip
+SELECT trip_id, start_location, stop_location,
+       TIMESTAMPDIFF(MINUTE, start_date, end_date) AS duration_min
+FROM UberTrips
+ORDER BY duration_min DESC
+LIMIT 10;
+
+-- Miles per Category per Month
+SELECT DATE_FORMAT(start_date, '%Y-%m') AS month,
+       category,
+       SUM(miles) AS total_miles
+FROM UberTrips
+GROUP BY month, category
+ORDER BY month, total_miles DESC;
+
+-- Trips by week
+SELECT YEAR(start_date) AS year,
+       WEEK(start_date, 1) AS week_number,
+       COUNT(*) AS total_trips
+FROM UberTrips
+GROUP BY year, week_number
+ORDER BY year, week_number;
+
+-- Longest Frequent Route
+SELECT start_location, stop_location,
+       COUNT(*) AS trips,
+       ROUND(AVG(miles), 2) AS avg_miles
+FROM UberTrips
+GROUP BY start_location, stop_location
+HAVING trips > 3
+ORDER BY avg_miles DESC
+LIMIT 10;
+
+-- Purpose trend
+SELECT DATE_FORMAT(start_date, '%Y-%m') AS month,
+       purpose,
+       COUNT(*) AS total_trips
+FROM UberTrips
+GROUP BY month, purpose
+ORDER BY month, total_trips DESC;
