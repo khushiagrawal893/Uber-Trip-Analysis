@@ -53,7 +53,7 @@ It reveals key insights such as:
 
 ## 📊 Dashboard Highlights
 - Executive Overview: ![Dashboard](https://github.com/khushiagrawal893/Uber-Trip-Analysis/blob/main/Dashboards/Executive%20Overview.png)
-- Temporal Analysis: ![Dashboard](screenshots/heatmap.png)
+- Temporal Analysis: ![Dashboard](https://github.com/khushiagrawal893/Uber-Trip-Analysis/blob/main/Dashboards/Temporal%20Analysis.png)
 - Trip Patterns: ![Dashboard](screenshots/trip-purpose.png)
 - Purpose and Trip Segmentation: ![Dashboard](screenshots/forecasting.png)
 - Data Quality & Anomalies: ![Dashboard](screenshots/forecasting.png)
